@@ -1,0 +1,56 @@
+{% include "./licenseInfo.peb" %}
+package {{ package }};
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import feign.*;
+{% for import in imports %}import {{ import.import }};{{ newline() }}{% endfor %}
+
+import javax.annotation.processing.Generated;
+
+{# Information #}
+{% if description is not empty %}@Schema(description = "{{ description }}"){{ newline() }}{% endif %}
+@Generated(value = "{{ generatorClass }}"{% if not hideGenerationTimestamp %}, date = "{{ generatedDate }}"{% endif %})
+public interface {{ classname }} {
+
+{% for operation in operations.operation %}
+    /**
+     * {{ operation.summary }}{{ newline() }}
+     *
+{% if operation.notes is not empty %}
+     * {{ operation.notes }}{{ newline() }}
+     *
+{% endif %}
+{# Params & ReturnType #}
+{% for param in operation.allParams %}
+     * @param {{ param.paramName | padright(20) }} {{ param.description }}{% if param.required %} (required){% else %}(optional{% if param.defaultValue is not empty %}, defaults to {{ param.defaultValue }}{% endif %}){% endif %}{{ newline() }}
+{% endfor %}
+{% if operation.returnType is not empty %}
+     * @return {{ operation.returnType }}{{ newline() }}
+{% endif %}
+{# External Documentation #}
+{% if operation.externalDocs is not empty %}
+     * @see <a href="{{ operation.externalDocs.url }}">{{ operation.externalDocs.description }}</a>
+{% endif %}
+{# Deprecated #}
+{% if operation.isDeprecated %}
+     * @deprecated{% if operation.vendorExtensions.x_deprecated is not empty %} {{ operation.vendorExtensions.x_deprecated }}{% endif %}{{ newline() }}
+{% endif %}
+     */
+{# Deprecated #}
+{% if operation.isDeprecated %}    @Deprecated{{ newline() }}{% endif %}
+    @RequestLine("{{ operation.httpMethod }} {{ operation.path }}{% if operation.hasQueryParams %}?{% for param in operation.queryParams %}{{ param.baseName }}={{ "{" }}{{ param.paramName }}{{ "}" }}{% if not loop.last %}&{% endif %}{% endfor %}{% endif %}")
+{% if operation.hasHeaderParams %}
+    @Headers(
+{% for param in operation.headerParams %}
+        "{{ param.baseName }}: {% if param.baseName == "Authorization" %}Bearer {% endif %}{{ param.paramName | wrapin("{", "}") }}"{% if not loop.last %}, {% endif %}{{ newline() }}
+{% endfor %}
+    )
+{% endif %}
+    {% if operation.returnType is not empty %}{{ operation.returnType }}{% else %}void{% endif %} {{ operation.nickname }}({% for param in operation.allParams %}@Param("{{ param.paramName }}") {{ param.dataType }} {{ param.paramName }}{% if not loop.last %}, {% endif %}{% endfor %});
+
+{% endfor %}
+}

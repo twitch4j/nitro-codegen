@@ -1,0 +1,20 @@
+{% include "./licenseInfo.peb" %}
+package {{ package }};
+
+import java.util.Objects;
+import java.util.Arrays;
+
+{% for import in imports %}import {{ import.import }};{{ newline() }}{% endfor %}
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import com.fasterxml.jackson.annotation.JsonTypeName;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+import javax.annotation.processing.Generated;
+
+{% for data in models %}
+{% if data.model.isEnum %}
+{% include "./modelEnum.peb" with {"model":data.model} %}
+{% else %}
+{% include "./modelPojo.peb" with {"model":data.model} %}
+{% endif %}
+{% endfor %}
