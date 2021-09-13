@@ -1,0 +1,15 @@
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Arrays;
+
+{% if jetbrainsAnnotationsNullable %}
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+{% endif %}
+
+import javax.annotation.processing.Generated;
+
+{% for import in imports %}import {{ import.import }};{{ newline() }}{% endfor %}

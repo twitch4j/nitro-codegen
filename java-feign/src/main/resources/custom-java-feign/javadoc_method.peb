@@ -1,0 +1,23 @@
+    /**
+     * {{ operation.summary }}{{ newline() }}
+     *
+{% if operation.notes is not empty %}
+     * {{ operation.notes }}{{ newline() }}
+     *
+{% endif %}
+{# Params & ReturnType #}
+{% for param in operation.allParams %}
+     * @param {{ param.paramName | padright(20) }} {{ param.description }}{% if param.required %} (required){% else %} (optional{% if param.defaultValue is not empty %}, defaults to {{ param.defaultValue }}{% endif %}){% endif %}{{ newline() }}
+{% endfor %}
+{% if operation.returnType is not empty %}
+     * @return {{ operation.returnType }}{{ newline() }}
+{% endif %}
+{# External Documentation #}
+{% if operation.externalDocs is not empty %}
+     * @see <a href="{{ operation.externalDocs.url }}">{{ operation.externalDocs.description }}</a>
+{% endif %}
+{# Deprecated #}
+{% if operation.isDeprecated %}
+     * @deprecated{% if operation.vendorExtensions.x_deprecated is not empty %} {{ operation.vendorExtensions.x_deprecated }}{% endif %}{{ newline() }}
+{% endif %}
+     */

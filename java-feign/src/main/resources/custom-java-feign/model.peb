@@ -1,8 +1,7 @@
 {% include "./licenseInfo.peb" %}
 package {{ package }};
 
-import java.util.Objects;
-import java.util.Arrays;
+{% include "./import.peb" %}
 
 {% for import in imports %}import {{ import.import }};{{ newline() }}{% endfor %}
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;

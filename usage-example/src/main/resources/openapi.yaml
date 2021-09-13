@@ -8,6 +8,9 @@ info:
   license:
     name: MIT
     url: https://github.com/twitch4j/twitch4j/blob/master/LICENSE
+  contact:
+    name: Discord Community
+    url: https://discord.gg/FQ5vgW3
   version: 1.0.0
 externalDocs:
   description: Official Documentation
@@ -15,6 +18,50 @@ externalDocs:
 servers:
   - url: https://api.twitch.tv/helix
 tags:
+  - name: analytics
+    description: Analytics
+  - name: bits
+    description: Bits
+  - name: channel_points
+    description: Channel Points
+  - name: chat
+    description: Chat
+  - name: entitlements
+    description: Entitlements
+  - name: eventsub
+    description: Eventsub
+  - name: extensions
+    description: Extensions
+  - name: search
+    description: Search
+  - name: channels
+    description: channels
+  - name: clips
+    description: clips
+  - name: hypetrain
+    description: hypetrain
+  - name: moderation
+    description: moderation
+  - name: polls
+    description: polls
+  - name: predictions
+    description: predictions
+  - name: schedule
+    description: schedule
+  - name: streams
+    description: streams
+  - name: tags
+    description: tags
+  - name: subscriptions
+    description: subscriptions
+  - name: teams
+    description: teams
+  - name: users
+    description: users
+  - name: videos
+    description: videos
+  - name: webhooks
+    description: webhooks
   - name: games
     description: Game Endpoints
 paths:

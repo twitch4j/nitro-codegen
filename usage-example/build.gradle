@@ -13,6 +13,7 @@ dependencies {
 
     // Annotations
     implementation group: 'io.swagger.core.v3', name: 'swagger-annotations', version: '2.1.10'
+    implementation group: 'org.jetbrains', name: 'annotations', version: '22.0.0'
 
     // Jackson
     implementation group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.12.5'

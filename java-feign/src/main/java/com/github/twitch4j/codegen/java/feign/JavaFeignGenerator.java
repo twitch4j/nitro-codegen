@@ -3,7 +3,9 @@ package com.github.twitch4j.codegen.java.feign;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.Operation;
 import io.swagger.v3.oas.models.PathItem;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.openapitools.codegen.CliOption;
 import org.openapitools.codegen.CodegenConfig;
 import org.openapitools.codegen.CodegenType;
 
@@ -27,6 +29,11 @@ public class JavaFeignGenerator extends AbstractJava8Codegen implements CodegenC
         return CODEGEN_HELP;
     }
 
+    public static final String JETBRAINS_ANNOTATION_NULLABLE = "jetbrainsAnnotationsNullable";
+
+    @Setter
+    private Boolean jetbrainsAnnotationsNullable = true;
+
     public JavaFeignGenerator() {
         super();
 
@@ -48,8 +55,24 @@ public class JavaFeignGenerator extends AbstractJava8Codegen implements CodegenC
         // add original openapi yaml to resources
         // supportingFiles.add(new SupportingFile("openapi.peb", projectFolder + "/resources/openapi", "openapi.yaml"));
 
+        // features
+        cliOptions.add(CliOption.newBoolean(JETBRAINS_ANNOTATION_NULLABLE, "Enable JetBrains Annotations Nullable", this.jetbrainsAnnotationsNullable));
+
         // configuration
         setSerializableModel(true);
+        setJetbrainsAnnotationsNullable(true);
+    }
+
+    @Override
+    public void processOpts() {
+        super.processOpts();
+
+        // nullable
+        // - intellij annotation
+        if (additionalProperties.containsKey(JETBRAINS_ANNOTATION_NULLABLE)) {
+            this.setJetbrainsAnnotationsNullable(Boolean.parseBoolean(additionalProperties.get(JETBRAINS_ANNOTATION_NULLABLE).toString()));
+        }
+        additionalProperties.put(JETBRAINS_ANNOTATION_NULLABLE, jetbrainsAnnotationsNullable);
     }
 
     /**

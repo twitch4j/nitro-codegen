@@ -1,15 +1,8 @@
 {% include "./licenseInfo.peb" %}
 package {{ package }};
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
+{% include "./import.peb" %}
 import feign.*;
-{% for import in imports %}import {{ import.import }};{{ newline() }}{% endfor %}
-
-import javax.annotation.processing.Generated;
 
 {# Information #}
 {% if description is not empty %}@Schema(description = "{{ description }}"){{ newline() }}{% endif %}
@@ -17,6 +10,22 @@ import javax.annotation.processing.Generated;
 public interface {{ classname }} {
 
 {% for operation in operations.operation %}
+{# DEFAULT METHOD #}
+{% include "./javadoc_method.peb" %}{{ newline() }}
+{# Deprecated #}
+{% if operation.isDeprecated %}    @Deprecated{{ newline() }}{% endif %}
+    @RequestLine("{{ operation.httpMethod }} {{ operation.path }}{% if operation.hasQueryParams %}?{% for param in operation.queryParams %}{{ param.baseName }}={{ "{" }}{{ param.paramName }}{{ "}" }}{% if not loop.last %}&{% endif %}{% endfor %}{% endif %}")
+{% if operation.hasHeaderParams %}
+    @Headers(
+{% for param in operation.headerParams %}
+        "{{ param.baseName }}: {% if param.baseName == "Authorization" %}Bearer {% endif %}{{ param.paramName | wrapin("{", "}") }}"{% if not loop.last %}, {% endif %}{{ newline() }}
+{% endfor %}
+    )
+{% endif %}
+    {% if operation.returnType is not empty %}{{ operation.returnType }}{% else %}void{% endif %} {{ operation.nickname }}({% for param in operation.allParams %}@Param("{{ param.paramName }}") {% include "./param_annotation.peb" %}{{ param.dataType }} {{ param.paramName }}{% if not loop.last %}, {% endif %}{% endfor %});
+
+{# PARAM MAP METHOD #}
+{% if operation.hasParams %}
     /**
      * {{ operation.summary }}{{ newline() }}
      *
@@ -25,9 +34,7 @@ public interface {{ classname }} {
      *
 {% endif %}
 {# Params & ReturnType #}
-{% for param in operation.allParams %}
-     * @param {{ param.paramName | padright(20) }} {{ param.description }}{% if param.required %} (required){% else %}(optional{% if param.defaultValue is not empty %}, defaults to {{ param.defaultValue }}{% endif %}){% endif %}{{ newline() }}
-{% endfor %}
+     * @param {{ "params" | padright(20) }} a key-value map that contains all query parameters (required){{ newline() }}
 {% if operation.returnType is not empty %}
      * @return {{ operation.returnType }}{{ newline() }}
 {% endif %}
@@ -40,17 +47,17 @@ public interface {{ classname }} {
      * @deprecated{% if operation.vendorExtensions.x_deprecated is not empty %} {{ operation.vendorExtensions.x_deprecated }}{% endif %}{{ newline() }}
 {% endif %}
      */
-{# Deprecated #}
-{% if operation.isDeprecated %}    @Deprecated{{ newline() }}{% endif %}
-    @RequestLine("{{ operation.httpMethod }} {{ operation.path }}{% if operation.hasQueryParams %}?{% for param in operation.queryParams %}{{ param.baseName }}={{ "{" }}{{ param.paramName }}{{ "}" }}{% if not loop.last %}&{% endif %}{% endfor %}{% endif %}")
-{% if operation.hasHeaderParams %}
-    @Headers(
+    default {% if operation.returnType is not empty %}{{ operation.returnType }}{% else %}void{% endif %} {{ operation.nickname }}(Map<String, Object> params) {
+{# Parameter Validation #}
 {% for param in operation.headerParams %}
-        "{{ param.baseName }}: {% if param.baseName == "Authorization" %}Bearer {% endif %}{{ param.paramName | wrapin("{", "}") }}"{% if not loop.last %}, {% endif %}{{ newline() }}
-{% endfor %}
-    )
+{% if param.required %}
+        Objects.requireNonNull(params.get("{{ param.paramName }}"), "{{ param.paramName }} is a required parameter!");
 {% endif %}
-    {% if operation.returnType is not empty %}{{ operation.returnType }}{% else %}void{% endif %} {{ operation.nickname }}({% for param in operation.allParams %}@Param("{{ param.paramName }}") {{ param.dataType }} {{ param.paramName }}{% if not loop.last %}, {% endif %}{% endfor %});
+{% endfor %}
+
+        return {{ operation.nickname }}({% for param in operation.allParams %}({{ param.dataType }}) params.get("{{ param.paramName }}"){% if not loop.last %}, {% endif %}{% endfor %});
+    }
+{% endif %}
 
 {% endfor %}
 }
