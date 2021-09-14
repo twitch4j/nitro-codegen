@@ -7,9 +7,16 @@ import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.openapitools.codegen.CliOption;
 import org.openapitools.codegen.CodegenConfig;
+import org.openapitools.codegen.CodegenOperation;
+import org.openapitools.codegen.CodegenParameter;
 import org.openapitools.codegen.CodegenType;
+import org.openapitools.codegen.SupportingFile;
+import org.openapitools.codegen.api.TemplateFileType;
 
 import java.util.*;
+import java.util.regex.Pattern;
+
+import static org.openapitools.codegen.utils.StringUtils.camelize;
 
 @Slf4j
 public class JavaFeignGenerator extends AbstractJava8Codegen implements CodegenConfig {
@@ -30,6 +37,8 @@ public class JavaFeignGenerator extends AbstractJava8Codegen implements CodegenC
     }
 
     public static final String JETBRAINS_ANNOTATION_NULLABLE = "jetbrainsAnnotationsNullable";
+    public static final String REQUEST_OVERLOAD_MAP = "requestOverloadMap";
+    public static final String REQUEST_OVERLOAD_SPEC = "requestOverloadSpec";
 
     @Setter
     private Boolean jetbrainsAnnotationsNullable = true;
@@ -39,21 +48,6 @@ public class JavaFeignGenerator extends AbstractJava8Codegen implements CodegenC
 
         // setup
         templateDir = CODEGEN_NAME;
-
-        // dirs
-        final String invokerFolder = (sourceFolder + '/' + invokerPackage).replace(".", "/");
-        final String apiFolder = (sourceFolder + '/' + apiPackage).replace(".", "/");
-
-        // common files
-        modelTemplateFiles.put("model.peb", ".java");
-        apiTemplateFiles.put("api.peb", ".java");
-        apiTestTemplateFiles.put("api_test.peb", ".java");
-
-        // support files
-        // supportingFiles.add(new SupportingFile("README.peb", "", "README.md"));
-
-        // add original openapi yaml to resources
-        // supportingFiles.add(new SupportingFile("openapi.peb", projectFolder + "/resources/openapi", "openapi.yaml"));
 
         // features
         cliOptions.add(CliOption.newBoolean(JETBRAINS_ANNOTATION_NULLABLE, "Enable JetBrains Annotations Nullable", this.jetbrainsAnnotationsNullable));
@@ -73,6 +67,26 @@ public class JavaFeignGenerator extends AbstractJava8Codegen implements CodegenC
             this.setJetbrainsAnnotationsNullable(Boolean.parseBoolean(additionalProperties.get(JETBRAINS_ANNOTATION_NULLABLE).toString()));
         }
         additionalProperties.put(JETBRAINS_ANNOTATION_NULLABLE, jetbrainsAnnotationsNullable);
+        // - query by map
+        additionalProperties.put(REQUEST_OVERLOAD_MAP, false);
+        additionalProperties.put(REQUEST_OVERLOAD_SPEC, true);
+
+        // feign main class
+        additionalProperties.put("mainClassName", camelize(openAPI.getInfo().getTitle(), false).replace(" ", ""));
+
+        // directories
+        final String invokerFolder = (sourceFolder + '/' + invokerPackage).replace(".", "/");
+        final String apiFolder = (sourceFolder + '/' + apiPackage).replace(".", "/");
+        final String modelFolder = (sourceFolder + '/' + modelPackage).replace(".", "/");
+
+        // common files
+        modelTemplateFiles.put("model.peb", ".java");
+        apiTemplateFiles.put("api.peb", ".java");
+        apiTestTemplateFiles.put("api_test.peb", ".java");
+
+        // feign main interface
+        supportingFiles.clear();
+        supportingFiles.add(new SupportingFile("api_all.peb", apiFolder, additionalProperties.get("mainClassName")+".java").doNotOverwrite());
     }
 
     /**
@@ -110,10 +124,25 @@ public class JavaFeignGenerator extends AbstractJava8Codegen implements CodegenC
      * @param vendorExtensions vendorExtensions
      */
     private void processVendorExtensions(Map<String, Object> vendorExtensions) {
-        if (vendorExtensions != null) {
-            Map<String, Object> vendorExtensionsAdd = new HashMap<>();
-            vendorExtensions.keySet().stream().filter(key -> key.contains("-")).forEach(key -> vendorExtensionsAdd.put(key.replace("-", "_"), vendorExtensions.get(key)));
-            vendorExtensions.putAll(vendorExtensionsAdd);
+        // todo: modify vendor extensions
+    }
+
+    @Override
+    public Map<String, Object> postProcessOperationsWithModels(Map<String, Object> objs, List<Object> allModels) {
+        objs = super.postProcessOperationsWithModels(objs, allModels);
+
+        Map<String, Object> operations = (Map<String, Object>) objs.get("operations");
+        List<CodegenOperation> operationList = (List<CodegenOperation>) operations.get("operation");
+        for (CodegenOperation op : operationList) {
+            // collect all required scopes and store them into vendor extension
+            if (op.hasAuthMethods) {
+                Set<String> requiredScopes = new HashSet<>();
+                op.authMethods.forEach(method -> {
+                    Optional.ofNullable(method.scopes).ifPresent(scope -> scope.forEach(s -> requiredScopes.add(s.get("scope").toString())));
+                });
+                op.vendorExtensions.put("x-required-scopes", requiredScopes);
+            }
         }
+        return objs;
     }
 }

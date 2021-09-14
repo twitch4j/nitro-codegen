@@ -2,7 +2,7 @@
  * {% if model.title is empty %}{{ model.classname }}{{ else }}{{ model.title }}{% endif %}{{ newline() }}
  * {{ model.description }}{{ newline() }}
  *
-{% if model.isDeprecated %} * @deprecated{% if model.vendorExtensions.x_deprecated is not empty %} {{ model.vendorExtensions.x_deprecated }}{% endif %}{{ newline() }}{% endif %}
+{% if model.isDeprecated %} * @deprecated{% if model.vendorExtensions['x-deprecated'] is not empty %} {{ model.vendorExtensions['x-deprecated'] }}{% endif %}{{ newline() }}{% endif %}
  */
 {# Information #}
 {% if model.description is not empty %}@Schema(description = "{{ model.description }}"){{ newline() }}{% endif %}

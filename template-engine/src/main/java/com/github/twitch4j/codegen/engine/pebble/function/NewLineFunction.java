@@ -1,4 +1,4 @@
-package com.github.twitch4j.codegen.engine.pebble;
+package com.github.twitch4j.codegen.engine.pebble.function;
 
 import com.mitchellbosecke.pebble.extension.Function;
 import com.mitchellbosecke.pebble.template.EvaluationContext;

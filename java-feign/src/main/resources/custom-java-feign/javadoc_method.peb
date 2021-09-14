@@ -5,9 +5,13 @@
      * {{ operation.notes }}{{ newline() }}
      *
 {% endif %}
+{# Authentcation #}
+{% if operation.vendorExtensions['x-required-scopes'] is not empty %}
+     * Authentication - Required Scopes: {{ operation.vendorExtensions['x-required-scopes'] }}{{ newline() }}
+{% endif %}
 {# Params & ReturnType #}
 {% for param in operation.allParams %}
-     * @param {{ param.paramName | padright(20) }} {{ param.description }}{% if param.required %} (required){% else %} (optional{% if param.defaultValue is not empty %}, defaults to {{ param.defaultValue }}{% endif %}){% endif %}{{ newline() }}
+     * {% include "./javadoc_param.peb" %}
 {% endfor %}
 {% if operation.returnType is not empty %}
      * @return {{ operation.returnType }}{{ newline() }}
@@ -18,6 +22,6 @@
 {% endif %}
 {# Deprecated #}
 {% if operation.isDeprecated %}
-     * @deprecated{% if operation.vendorExtensions.x_deprecated is not empty %} {{ operation.vendorExtensions.x_deprecated }}{% endif %}{{ newline() }}
+     * @deprecated{% if operation.vendorExtensions['x-deprecated'] is not empty %} {{ operation.vendorExtensions['x-deprecated'] }}{% endif %}{{ newline() }}
 {% endif %}
      */

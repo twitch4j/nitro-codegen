@@ -1,6 +1,6 @@
 openapi: 3.0.3
 info:
-  title: Twitch API - Helix
+  title: Twitch - Helix
   description: |
     The new Twitch API provides the tools and data used to develop integrations with Twitch.
     The data models and systems are designed to provide relevant data in an easy, consistent, and reliable way.
@@ -18,6 +18,8 @@ externalDocs:
 servers:
   - url: https://api.twitch.tv/helix
 tags:
+  - name: ads
+    description: Advertisement
   - name: analytics
     description: Analytics
   - name: bits
@@ -32,6 +34,8 @@ tags:
     description: Eventsub
   - name: extensions
     description: Extensions
+  - name: games
+    description: Game Endpoints
   - name: search
     description: Search
   - name: channels
@@ -62,13 +66,76 @@ tags:
     description: videos
   - name: webhooks
     description: webhooks
-  - name: games
-    description: Game Endpoints
 paths:
+  /channels/commercial:
+    parameters:
+      - $ref: '#/components/parameters/tokenParam'
+    post:
+      tags:
+        - ads
+      summary: Start Commercial
+      description: Starts a commercial on a specified channel.
+      operationId: startCommercial
+      externalDocs:
+        description: Find more information on the Twitch Developer Documentation
+        url: https://dev.twitch.tv/docs/api/reference#start-commercial
+      security:
+        - twitch_oauth2: ['channel:edit:commercial']
+      requestBody:
+        description: Optional description in *Markdown*
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - broadcaster_id
+                - length
+              properties:
+                broadcaster_id:
+                  type: string
+                  example: "41245072"
+                length:
+                  type: integer
+                  example: 60
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                title: CommercialData
+                description: Holds Information about the scheduled commercial.
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      title: CommercialDataTwo
+                      description: Holds Information about the scheduled commercial.
+                      type: object
+                      properties:
+                        length:
+                          type: integer
+                          description: Length of the triggered commercial
+                          example: 60
+                        message:
+                          type: string
+                          description: Provides contextual information on why the request failed
+                          example: ""
+                        retry_after:
+                          type: integer
+                          description: Seconds until the next commercial can be served on this channel
+                          example: 480
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/ToManyRequests'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
   /games:
     get:
-      tags:
-        - games
+      tags: [games]
       summary: Gets game information by game ID or name.
       description: Use a user-token or app-token to increase rate limits.
       operationId: getGames
@@ -139,19 +206,14 @@ paths:
                     items:
                       $ref: '#/components/schemas/Game'
         '401':
-          description: Must provide a valid Client-ID or OAuth token
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/APIError'
+          $ref: '#/components/responses/Unauthorized'
         '429':
-          description: "The request limit is across all New Twitch API endpoints. If this limit is exceeded, an error is returned: HTTP 429 (Too Many Requests)."
+          $ref: '#/components/responses/ToManyRequests'
         '503':
-          description: "If you get an HTTP 503 (Service Unavailable) error, retry once. If that retry also results in an HTTP 503, there probably is something wrong with the downstream service."
+          $ref: '#/components/responses/ServiceUnavailable'
   /games/top:
     get:
-      tags:
-        - games
+      tags: [games]
       summary: Gets games sorted by number of current viewers on Twitch, most popular first.
       operationId: getTopGames
       parameters:
@@ -178,16 +240,15 @@ paths:
                     items:
                       $ref: '#/components/schemas/Pagination'
         '401':
-          description: "Must provide a valid Client-ID or OAuth token"
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/APIError'
+          $ref: '#/components/responses/Unauthorized'
         '429':
-          description: "HTTP 429 (Too Many Requests). You have exceeded the request limit, please check your rate-limiting."
+          $ref: '#/components/responses/ToManyRequests'
         '503':
-          description: "If you get an HTTP 503 (Service Unavailable) error, retry once. If that retry also results in an HTTP 503, there probably is something wrong with the downstream service."
+          $ref: '#/components/responses/ServiceUnavailable'
+
+# Components
 components:
+  # Request Parameters
   parameters:
     tokenParam:
       in: header
@@ -220,6 +281,7 @@ components:
         maximum: 100
         default: 20
       description: "Maximum number of objects to return. Maximum: 100. Default: 20."
+  # Response Schemas
   schemas:
     Game:
       description: Contains game information.
@@ -237,6 +299,7 @@ components:
           example: Fortnite
         box_art_url:
           type: string
+          format: uri
           example: https://static-cdn.jtvnw.net/ttv-boxart/Fortnite-{width}x{height}.jpg
     Pagination:
       description: The Twitch API supports cursor-based pagination for APIs that return lists of resources. This object holds the current curser.
@@ -260,3 +323,153 @@ components:
         message:
           type: string
           example: Must provide a valid Client-ID or OAuth token
+
+  # Resposnes
+  responses:
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/APIError'
+    ToManyRequests:
+      description: "HTTP 429 (Too Many Requests). You have exceeded the request limit, please check your rate-limiting."
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/APIError'
+    ServiceUnavailable:
+      description: "If you get an HTTP 503 (Service Unavailable) error, retry once."
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/APIError'
+
+  # Authentication
+  securitySchemes:
+    clientId:
+      type: apiKey
+      name: Client-Id
+      in: header
+      description: The ClientId of the Twitch App.
+    twitch_oauth2:
+      type: oauth2
+      flows:
+        clientCredentials:
+          tokenUrl: https://id.twitch.tv/oauth2/token
+          scopes:
+            analytics:read:extensions: View analytics data for your extensions.
+            user:edit: Manage a user object.
+            user:read:email: Read authorized user's email address.
+            clips:edit: Create and edit clips as a specific user.
+            bits:read: View bits information for your channel.
+            analytics:read:games: View analytics data for your games.
+            user:edit:broadcast: Edit your channel's broadcast configuration, including extension configuration. (This scope implies user:read:broadcast capability.)
+            user:read:broadcast: View your broadcasting configuration, including extension configurations.
+            chat:read: View live Stream Chat and Rooms messages.
+            chat:edit: Send live Stream Chat and Rooms messages.
+            channel:moderate: Perform moderation actions in a channel.
+            channel:read:subscriptions: Get a list of all subscribers to your channel and check if a user is subscribed to your channel.
+            whispers:read: View your whisper messages.
+            whispers:edit: Send whisper messages.
+            moderation:read: View your channel's moderation data including Moderators, Bans, Timeouts and Automod settings
+            channel:read:redemptions: View your channel points custom reward redemptions
+            channel:edit:commercial: Run commercials on a channel.
+            channel:read:hype_train: View hype train data for a given channel.
+            channel:read:stream_key: Read authorized user's stream key.
+            channel:manage:extensions: Manage your channel's extension configuration, including activating extensions.
+            channel:manage:broadcast: Manage your channel's broadcast configuration, including updating channel configuration and managing stream markers and stream tags.
+            user:edit:follows: Edit your follows.
+            channel:manage:redemptions: Manage Channel Points custom rewards and their redemptions on a channel.
+            channel:read:editors: View a list of users with the editor role for a channel.
+            channel:manage:videos: Manage a channel's videos, including deleting videos.
+            user:read:blocked_users: View the block list of a user.
+            user:manage:blocked_users: Manage the block list of a user.
+            user:read:subscriptions: Get the details of your subscription to a channel.
+            user:read:follows: View the list of channels a user follows.
+            channel:manage:polls: Manage a channel's polls.
+            channel:manage:predictions: Manage of channel's Channel Points Predictions
+            channel:read:polls: View a channel's polls.
+            channel:read:predictions: View a channel's Channel Points Predictions.
+            moderator:manage:automod: Manage messages held for review by AutoMod in channels where you are a moderator.
+            channel:manage:schedule: Manage a channel's stream schedule.
+            channel:read:goals: View Creator Goals for a channel.
+        authorizationCode:
+          authorizationUrl: https://id.twitch.tv/oauth2/authorize
+          tokenUrl: https://id.twitch.tv/oauth2/token
+          scopes:
+            analytics:read:extensions: View analytics data for your extensions.
+            user:edit: Manage a user object.
+            user:read:email: Read authorized user's email address.
+            clips:edit: Create and edit clips as a specific user.
+            bits:read: View bits information for your channel.
+            analytics:read:games: View analytics data for your games.
+            user:edit:broadcast: Edit your channel's broadcast configuration, including extension configuration. (This scope implies user:read:broadcast capability.)
+            user:read:broadcast: View your broadcasting configuration, including extension configurations.
+            chat:read: View live Stream Chat and Rooms messages.
+            chat:edit: Send live Stream Chat and Rooms messages.
+            channel:moderate: Perform moderation actions in a channel.
+            channel:read:subscriptions: Get a list of all subscribers to your channel and check if a user is subscribed to your channel.
+            whispers:read: View your whisper messages.
+            whispers:edit: Send whisper messages.
+            moderation:read: View your channel's moderation data including Moderators, Bans, Timeouts and Automod settings
+            channel:read:redemptions: View your channel points custom reward redemptions
+            channel:edit:commercial: Run commercials on a channel.
+            channel:read:hype_train: View hype train data for a given channel.
+            channel:read:stream_key: Read authorized user's stream key.
+            channel:manage:extensions: Manage your channel's extension configuration, including activating extensions.
+            channel:manage:broadcast: Manage your channel's broadcast configuration, including updating channel configuration and managing stream markers and stream tags.
+            user:edit:follows: Edit your follows.
+            channel:manage:redemptions: Manage Channel Points custom rewards and their redemptions on a channel.
+            channel:read:editors: View a list of users with the editor role for a channel.
+            channel:manage:videos: Manage a channel's videos, including deleting videos.
+            user:read:blocked_users: View the block list of a user.
+            user:manage:blocked_users: Manage the block list of a user.
+            user:read:subscriptions: Get the details of your subscription to a channel.
+            user:read:follows: View the list of channels a user follows.
+            channel:manage:polls: Manage a channel's polls.
+            channel:manage:predictions: Manage of channel's Channel Points Predictions
+            channel:read:polls: View a channel's polls.
+            channel:read:predictions: View a channel's Channel Points Predictions.
+            moderator:manage:automod: Manage messages held for review by AutoMod in channels where you are a moderator.
+            channel:manage:schedule: Manage a channel's stream schedule.
+            channel:read:goals: View Creator Goals for a channel.
+        implicit:
+          authorizationUrl: https://id.twitch.tv/oauth2/authorize
+          scopes:
+            analytics:read:extensions: View analytics data for your extensions.
+            user:edit: Manage a user object.
+            user:read:email: Read authorized user's email address.
+            clips:edit: Create and edit clips as a specific user.
+            bits:read: View bits information for your channel.
+            analytics:read:games: View analytics data for your games.
+            user:edit:broadcast: Edit your channel's broadcast configuration, including extension configuration. (This scope implies user:read:broadcast capability.)
+            user:read:broadcast: View your broadcasting configuration, including extension configurations.
+            chat:read: View live Stream Chat and Rooms messages.
+            chat:edit: Send live Stream Chat and Rooms messages.
+            channel:moderate: Perform moderation actions in a channel.
+            channel:read:subscriptions: Get a list of all subscribers to your channel and check if a user is subscribed to your channel.
+            whispers:read: View your whisper messages.
+            whispers:edit: Send whisper messages.
+            moderation:read: View your channel's moderation data including Moderators, Bans, Timeouts and Automod settings
+            channel:read:redemptions: View your channel points custom reward redemptions
+            channel:edit:commercial: Run commercials on a channel.
+            channel:read:hype_train: View hype train data for a given channel.
+            channel:read:stream_key: Read authorized user's stream key.
+            channel:manage:extensions: Manage your channel's extension configuration, including activating extensions.
+            channel:manage:broadcast: Manage your channel's broadcast configuration, including updating channel configuration and managing stream markers and stream tags.
+            user:edit:follows: Edit your follows.
+            channel:manage:redemptions: Manage Channel Points custom rewards and their redemptions on a channel.
+            channel:read:editors: View a list of users with the editor role for a channel.
+            channel:manage:videos: Manage a channel's videos, including deleting videos.
+            user:read:blocked_users: View the block list of a user.
+            user:manage:blocked_users: Manage the block list of a user.
+            user:read:subscriptions: Get the details of your subscription to a channel.
+            user:read:follows: View the list of channels a user follows.
+            channel:manage:polls: Manage a channel's polls.
+            channel:manage:predictions: Manage of channel's Channel Points Predictions
+            channel:read:polls: View a channel's polls.
+            channel:read:predictions: View a channel's Channel Points Predictions.
+            moderator:manage:automod: Manage messages held for review by AutoMod in channels where you are a moderator.
+            channel:manage:schedule: Manage a channel's stream schedule.
+            channel:read:goals: View Creator Goals for a channel.

@@ -24,14 +24,18 @@ public interface {{ classname }} {
 {% endif %}
     {% if operation.returnType is not empty %}{{ operation.returnType }}{% else %}void{% endif %} {{ operation.nickname }}({% for param in operation.allParams %}@Param("{{ param.paramName }}") {% include "./param_annotation.peb" %}{{ param.dataType }} {{ param.paramName }}{% if not loop.last %}, {% endif %}{% endfor %});
 
-{# PARAM MAP METHOD #}
-{% if operation.hasParams %}
+{# OVERLOAD - MAP #}
+{% if requestOverloadMap and operation.hasParams %}
     /**
      * {{ operation.summary }}{{ newline() }}
      *
 {% if operation.notes is not empty %}
      * {{ operation.notes }}{{ newline() }}
      *
+{% endif %}
+{# Authentcation #}
+{% if operation.vendorExtensions['x-required-scopes'] is not empty %}
+     * Authentication - Required Scopes: {{ operation.vendorExtensions['x-required-scopes'] }}{{ newline() }}
 {% endif %}
 {# Params & ReturnType #}
      * @param {{ "params" | padright(20) }} a key-value map that contains all query parameters (required){{ newline() }}
@@ -44,18 +48,114 @@ public interface {{ classname }} {
 {% endif %}
 {# Deprecated #}
 {% if operation.isDeprecated %}
-     * @deprecated{% if operation.vendorExtensions.x_deprecated is not empty %} {{ operation.vendorExtensions.x_deprecated }}{% endif %}{{ newline() }}
+     * @deprecated{% if operation.vendorExtensions['x-deprecated'] is not empty %} {{ operation.vendorExtensions['x-deprecated'] }}{% endif %}{{ newline() }}
 {% endif %}
      */
     default {% if operation.returnType is not empty %}{{ operation.returnType }}{% else %}void{% endif %} {{ operation.nickname }}(Map<String, Object> params) {
 {# Parameter Validation #}
-{% for param in operation.headerParams %}
+{% for param in operation.allParams %}
 {% if param.required %}
         Objects.requireNonNull(params.get("{{ param.paramName }}"), "{{ param.paramName }} is a required parameter!");
 {% endif %}
 {% endfor %}
 
-        return {{ operation.nickname }}({% for param in operation.allParams %}({{ param.dataType }}) params.get("{{ param.paramName }}"){% if not loop.last %}, {% endif %}{% endfor %});
+        {% if operation.returnType is not empty %}return {% endif %}{{ operation.nickname }}({% for param in operation.allParams %}({{ param.dataType }}) params.get("{{ param.paramName }}"){% if not loop.last %}, {% endif %}{% endfor %});
+    }
+{% endif %}
+
+{# OVERLOAD - SPEC #}
+{% if requestOverloadSpec and operation.hasParams %}
+    /**
+     * {{ operation.summary }}{{ newline() }}
+     *
+{% if operation.notes is not empty %}
+     * {{ operation.notes }}{{ newline() }}
+     *
+{% endif %}
+{# Authentcation #}
+{% if operation.vendorExtensions['x-required-scopes'] is not empty %}
+     * Authentication - Required Scopes: {{ operation.vendorExtensions['x-required-scopes'] }}{{ newline() }}
+{% endif %}
+{# Params & ReturnType #}
+     * @param {{ "spec" | padright(20) }} a consumer that takes a spec to prepare the request for execution
+{% if operation.returnType is not empty %}
+     * @return {{ operation.returnType }}{{ newline() }}
+{% endif %}
+{# External Documentation #}
+{% if operation.externalDocs is not empty %}
+     * @see <a href="{{ operation.externalDocs.url }}">{{ operation.externalDocs.description }}</a>
+{% endif %}
+{# Deprecated #}
+{% if operation.isDeprecated %}
+     * @deprecated{% if operation.vendorExtensions.x_deprecated is not empty %} {{ operation.vendorExtensions.x_deprecated }}{% endif %}{{ newline() }}
+{% endif %}
+     */
+    default {% if operation.returnType is not empty %}{{ operation.returnType }}{% else %}void{% endif %} {{ operation.nickname }}(Consumer<{{ operation.nickname | capitalize }}Spec> spec) {
+        {{ operation.nickname | capitalize }}Spec requestSpec = new {{ operation.nickname | capitalize }}Spec();
+        spec.accept(requestSpec);
+        requestSpec.validate();
+        {% if operation.returnType is not empty %}return {% endif %}{{ operation.nickname }}({% for param in operation.allParams %}requestSpec.{{ param.paramName }}(){% if not loop.last %}, {% endif %}{% endfor %});
+    }
+
+    /**
+     * {{ operation.nickname | capitalize }}Spec
+     *
+     * This class is used to set request parameters when using the spec method.
+     *
+     * Required Parameters:
+{% for param in operation.allParams %}
+{% if param.required %}
+     * - {{ param.paramName }} {{ param.description }}{{ newline() }}
+{% endif %}
+{% endfor %}
+     * Optional Parameters:
+{% for param in operation.allParams %}
+{% if not param.required %}
+     * - {{ param.paramName }} {{ param.description }}{{ newline() }}
+{% endif %}
+{% endfor %}
+     */
+    public static class {{ operation.nickname | capitalize }}Spec {
+
+{% for param in operation.allParams %}
+        private {{ param.dataType }} {{ param.paramName }};
+{% endfor %}
+
+        /**
+         * Validates the Spec, will throw a exception if required parameters are missing
+         */
+        public void validate() {
+{% for param in operation.allParams %}
+{% if param.required %}
+            Objects.requireNonNull({{ param.paramName }}, "{{ param.paramName }} is a required parameter!");
+{% endif %}
+{% endfor %}
+        }
+
+{% for param in operation.allParams %}
+        /**
+         * Set {{ param.paramName }}{{ newline() }}
+         *
+         * {% include "./javadoc_param.peb" %}
+         * @return {{ operation.nickname | capitalize }}Spec
+         */
+        public {{ operation.nickname | capitalize }}Spec {{ param.paramName }}({% include "./param_annotation.peb" %}{{ param.dataType }} {{ param.paramName }}) {
+{% if param.dataType startswith "Map<" %}
+            this.{{ param.paramName }} = Collections.unmodifiableMap({{ param.paramName }});
+{% elseif param.dataType startswith "List<" %}
+            this.{{ param.paramName }} = Collections.unmodifiableList({{ param.paramName }});
+{% else %}
+            this.{{ param.paramName }} = {{ param.paramName }};
+{% endif %}
+
+            return this;
+        }
+
+        public {{ param.dataType }} {{ param.paramName }}() {
+            return this.{{ param.paramName }};
+        }
+
+{% endfor %}
     }
 {% endif %}
 

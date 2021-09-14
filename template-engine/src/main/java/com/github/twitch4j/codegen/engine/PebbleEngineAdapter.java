@@ -35,6 +35,7 @@ public class PebbleEngineAdapter implements TemplatingEngineAdapter {
     public PebbleEngineAdapter() {
         loader = new CodeGeneratorTemplateExecutorLoader();
         engine = new PebbleEngine.Builder()
+                .cacheActive(false)
                 .newLineTrimming(true)
                 .extension(new CodeGenPebbleExtension())
                 .autoEscaping(false)

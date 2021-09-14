@@ -32,7 +32,6 @@ swaggerSources {
             configFile = file("src/main/resources/openapi.json")
             outputDir = file("$rootDir/usage-example")
             rawOptions = Collections.singletonList("--engine=auto")
-            components = [models: true, modelTests: true, apis: true, apiTests: true]
             wipeOutputDir = false
         }
     }

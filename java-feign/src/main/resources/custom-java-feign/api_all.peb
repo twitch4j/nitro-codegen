@@ -1,0 +1,12 @@
+{# MAIN INTERFACE FOR FEIGN #}
+{% include "./licenseInfo.peb" %}
+package {{ apiPackage }};
+
+{% include "./import.peb" %}
+import feign.*;
+
+{# Information #}
+@Generated(value = "{{ generatorClass }}"{% if not hideGenerationTimestamp %}, date = "{{ generatedDate }}"{% endif %})
+public interface {{ mainClassName }} extends {% for api in apiInfo.apis %}{{ api.classname }}{% if not loop.last %}, {% endif %}{% endfor %} {
+
+}

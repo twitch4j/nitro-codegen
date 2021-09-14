@@ -1,4 +1,4 @@
-package com.github.twitch4j.codegen.engine.pebble;
+package com.github.twitch4j.codegen.engine.pebble.filter;
 
 import com.mitchellbosecke.pebble.extension.Filter;
 import com.mitchellbosecke.pebble.template.EvaluationContext;
