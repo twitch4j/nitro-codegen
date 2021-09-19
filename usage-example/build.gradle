@@ -1,16 +1,22 @@
-// Apply the gradle plugins
-plugins {
-    id 'java'
-    id 'org.hidetake.swagger.generator' version '2.18.2'
+buildscript {
+    repositories {
+        mavenLocal()
+        mavenCentral()
+    }
+    dependencies {
+        classpath group: 'org.openapitools', name: 'openapi-generator-gradle-plugin', version: '5.3.0-SNAPSHOT'
+        // classpath group: 'org.openapitools', name: 'openapi-generator-gradle-plugin', version: '5.2.1'
+
+        classpath project(':' + rootProject.name + '-template-engine')
+        classpath project(':' + rootProject.name + '-java-feign')
+    }
 }
+
+apply plugin: "java"
+apply plugin: "org.openapi.generator"
 
 // Dependencies
 dependencies {
-    // CodeGenerator
-    swaggerCodegen group: 'org.openapitools', name: 'openapi-generator-cli', version: '5.2.1'
-    swaggerCodegen project(':' + rootProject.name + '-java-feign')
-    swaggerCodegen project(':' + rootProject.name + '-template-engine')
-
     // Annotations
     implementation group: 'io.swagger.core.v3', name: 'swagger-annotations', version: '2.1.10'
     implementation group: 'org.jetbrains', name: 'annotations', version: '22.0.0'
@@ -18,25 +24,40 @@ dependencies {
     // Jackson
     implementation group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.12.5'
 
+    // Metrics
+    implementation group: 'io.micrometer', name: 'micrometer-core', version: '1.7.3'
+
     // Feign
     implementation group: 'io.github.openfeign', name: 'feign-core', version: '11.6'
+    implementation group: 'io.github.openfeign', name: 'feign-slf4j', version: '11.6'
+    implementation group: 'io.github.openfeign', name: 'feign-jackson', version: '11.6'
+    implementation group: 'io.github.openfeign', name: 'feign-java11', version: '11.6'
+
+    // Resilience4J
+    implementation group: 'io.github.resilience4j', name: 'resilience4j-core', version: '1.7.1'
+    implementation group: 'io.github.resilience4j', name: 'resilience4j-circuitbreaker', version: '1.7.1'
+    implementation group: 'io.github.resilience4j', name: 'resilience4j-ratelimiter', version: '1.7.1'
+    implementation group: 'io.github.resilience4j', name: 'resilience4j-feign', version: '1.7.1'
+    implementation group: 'io.github.resilience4j', name: 'resilience4j-retry', version: '1.7.1'
+    implementation group: 'io.github.resilience4j', name: 'resilience4j-bulkhead', version: '1.7.1'
 }
 
-// OpenAPI Sources
-swaggerSources {
-    helix {
-        inputFile = file('src/main/resources/openapi.yaml')
-        code {
-            language = 'custom-java-feign'
-            configuration = configurations.swaggerCodegen
-            configFile = file("src/main/resources/openapi.json")
-            outputDir = file("$rootDir/usage-example")
-            rawOptions = Collections.singletonList("--engine=auto")
-            wipeOutputDir = false
-        }
-    }
+openApiGenerate {
+    verbose = false
+    generatorName.set("custom-java-feign")
+    inputSpec = "$rootDir/usage-example/src/main/resources/openapi.yaml".toString()
+    outputDir = "$rootDir/usage-example".toString()
+    apiPackage = "com.github.twitch4j.helix.api"
+    invokerPackage = "com.github.twitch4j.helix"
+    modelPackage = "com.github.twitch4j.helix.domain"
+    configOptions = [
+        clientClassName: "TwitchHelix",
+        hideGenerationTimestamp: "false",
+        useJackson: "true",
+    ]
+    globalProperties = [
+        modelDocs: "false"
+    ]
+    enablePostProcessFile = false
+    engine = "auto" // auto select engine based on template file extension
 }
-
-// depend on jar task of the generators
-swaggerSources*.code*.dependsOn ':' + rootProject.name + '-java-feign:clean'
-swaggerSources*.code*.dependsOn ':' + rootProject.name + '-java-feign:jar'

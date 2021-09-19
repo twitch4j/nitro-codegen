@@ -1,8 +1,0 @@
-{
-  "modelPackage": "com.github.twitch4j.helix.domain",
-  "apiPackage": "com.github.twitch4j.helix.api",
-  "invokerPackage": "com.github.twitch4j.helix",
-  "clientClassName": "TwitchHelix",
-  "hideGenerationTimestamp": "false",
-  "useJackson": "true"
-}

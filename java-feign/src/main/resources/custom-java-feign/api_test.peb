@@ -5,11 +5,13 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.BeforeEach;
+
 {% for import in imports %}import {{ import.import }};{{ newline() }}{% endfor %}
+
 import javax.annotation.processing.Generated;
-import {{invokerPackage}}.ApiClient;
 
 /**
  * API tests for {{ classname }}{{ newline() }}
@@ -35,7 +37,7 @@ class {{ classname }}Test {
 {% for param in operation.allParams %}
         {{param.dataType}} {{param.paramName}} = null;
 {% endfor %}
-        // {% if operation.returnType is not empty %}{{ operation.returnType }} response = {% endif %}api.{{ operation.operationId }}({% for param in operation.allParams %}"{{ param.paramName }}"{% if not loop.last %},{% endif %}{% endfor %})
+        // {% if operation.returnType is not empty %}{{ operation.returnType }} response = {% endif %}api.{{ operation.operationId }}({% for param in operation.allParams %}{{ param.example }}{% if not loop.last %},{% endif %}{% endfor %})
         // TODO: test validations
     }
 {% endfor %}

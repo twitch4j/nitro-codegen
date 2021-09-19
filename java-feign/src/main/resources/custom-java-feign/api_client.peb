@@ -1,0 +1,61 @@
+{# API CLIENT #}
+{% include "./licenseInfo.peb" %}
+package {{ invokerPackage }};
+
+{% include "./import.peb" %}
+import feign.*;
+import feign.http2client.Http2Client;
+import feign.jackson.JacksonDecoder;
+import feign.jackson.JacksonEncoder;
+import feign.slf4j.Slf4jLogger;
+import io.github.resilience4j.feign.FeignDecorators;
+import io.github.resilience4j.feign.Resilience4jFeign;
+import {{ apiPackage }}.{{ mainClassName }};
+
+{# Information #}
+@Generated(value = "{{ generatorClass }}"{% if not hideGenerationTimestamp %}, date = "{{ generatedDate }}"{% endif %})
+public class {{ mainClassName }}Client {
+
+    public static {{ mainClassName }} create(Consumer<{{ mainClassName }}ClientSpec> consumerSpec) {
+        // spec
+        {{ mainClassName }}ClientSpec spec = new {{ mainClassName }}ClientSpec();
+        consumerSpec.accept(spec);
+        spec.validate();
+
+        // interceptors
+        List<RequestInterceptor> requestInterceptors = new ArrayList<>();
+
+        // decorators
+        FeignDecorators decorators = FeignDecorators.builder().build();
+
+        // construct client
+        return Resilience4jFeign.builder(decorators)
+                .logger(new Slf4jLogger())
+                .encoder(new JacksonEncoder())
+                .decoder(new JacksonDecoder())
+                .client(new Http2Client())
+                .requestInterceptors(requestInterceptors)
+                .logLevel(spec.loglevel)
+                .target({{ mainClassName }}.class, spec.baseUrl);
+    }
+
+    public static class {{ mainClassName }}ClientSpec {
+
+        protected String baseUrl = "{{ basePath }}";
+        protected Logger.Level loglevel = Logger.Level.NONE;
+
+        public void validate() {
+            Objects.requireNonNull(baseUrl, "baseUrl is a required parameter!");
+        }
+
+        public {{ mainClassName }}ClientSpec baseUrl(@NotNull String baseUrl) {
+            this.baseUrl = baseUrl;
+            return this;
+        }
+
+        public {{ mainClassName }}ClientSpec loglevel(@NotNull Logger.Level loglevel) {
+            this.loglevel = loglevel;
+            return this;
+        }
+    }
+}

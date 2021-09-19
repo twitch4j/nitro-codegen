@@ -26,6 +26,7 @@ public class JavaFeignGeneratorTest {
 
         final ClientOptInput clientOptInput = configurator.toClientOptInput();
         DefaultGenerator generator = new DefaultGenerator();
+        generator.setGenerateMetadata(false);
         generator.opts(clientOptInput).generate();
     }
 }

@@ -7,6 +7,6 @@ import feign.*;
 
 {# Information #}
 @Generated(value = "{{ generatorClass }}"{% if not hideGenerationTimestamp %}, date = "{{ generatedDate }}"{% endif %})
-public interface {{ mainClassName }} extends {% for api in apiInfo.apis %}{{ api.classname }}{% if not loop.last %}, {% endif %}{% endfor %} {
+public interface {{ mainClassName }}ApiCollection extends {% for api in apiInfo.apis %}{{ api.classname }}{% if not loop.last %}, {% endif %}{% endfor %} {
 
 }

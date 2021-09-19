@@ -16,6 +16,7 @@
 @JsonTypeName("{{ model.name }}")
 {# Deprecated #}
 {% if model.isDeprecated %}@Deprecated{{ newline() }}{% endif %}
+@Data
 public class {{ model.classname }}{% if model.parent is not empty %} extends {{ model.parent }}{% endif %} {
 {% if serializableModel %}
     private static final long serialVersionUID = 1L;
