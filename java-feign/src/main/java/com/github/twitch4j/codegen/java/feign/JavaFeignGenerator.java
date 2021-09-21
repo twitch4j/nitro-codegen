@@ -1,6 +1,5 @@
 package com.github.twitch4j.codegen.java.feign;
 
-import io.swagger.v3.oas.annotations.tags.Tags;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.Operation;
 import io.swagger.v3.oas.models.PathItem;
@@ -8,28 +7,27 @@ import io.swagger.v3.oas.models.media.Schema;
 import io.swagger.v3.oas.models.tags.Tag;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.BooleanUtils;
 import org.openapitools.codegen.CliOption;
 import org.openapitools.codegen.CodegenConfig;
 import org.openapitools.codegen.CodegenModel;
 import org.openapitools.codegen.CodegenOperation;
-import org.openapitools.codegen.CodegenParameter;
 import org.openapitools.codegen.CodegenProperty;
 import org.openapitools.codegen.CodegenType;
 import org.openapitools.codegen.SupportingFile;
-import org.openapitools.codegen.api.TemplateFileType;
 import org.openapitools.codegen.languages.AbstractJavaCodegen;
-import org.openapitools.codegen.utils.ModelUtils;
 
-import java.util.*;
-import java.util.regex.Pattern;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 
 import static org.openapitools.codegen.utils.StringUtils.camelize;
 
 @Slf4j
 public class JavaFeignGenerator extends AbstractJavaCodegen implements CodegenConfig {
 
-    protected static String CODEGEN_NAME = "custom-java-feign";
+    protected static String CODEGEN_NAME = "nitro-java-feign";
     protected static String CODEGEN_HELP = "Generates a " + CODEGEN_NAME + " client library.";
 
     public CodegenType getTag() {

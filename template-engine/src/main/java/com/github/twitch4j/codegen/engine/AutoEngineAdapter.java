@@ -16,18 +16,22 @@ import java.util.Map;
 @Slf4j
 public class AutoEngineAdapter implements TemplatingEngineAdapter {
 
-    private List<TemplatingEngineAdapter> engineAdapters = new ArrayList<>();
+    private static List<TemplatingEngineAdapter> engineAdapters = new ArrayList<>();
 
-    private List<String> extensions = new ArrayList<>();
+    private static List<String> extensions = new ArrayList<>();
 
     public AutoEngineAdapter() {
-        engineAdapters.add(new MustacheEngineAdapter());
-        engineAdapters.add(new HandlebarsEngineAdapter());
-        engineAdapters.add(new PebbleEngineAdapter());
-        engineAdapters.add(new JtwigEngineAdapter());
+        // load all known adapters, just once
+        if (engineAdapters.isEmpty()) {
+            engineAdapters.add(new MustacheEngineAdapter());
+            engineAdapters.add(new HandlebarsEngineAdapter());
+            engineAdapters.add(new PebbleEngineAdapter());
 
-
-        engineAdapters.forEach(a -> extensions.addAll(Arrays.asList(a.getFileExtensions())));
+            engineAdapters.forEach(adapter-> {
+                log.info("registered template engine adapter {}!", adapter.getIdentifier());
+                extensions.addAll(Arrays.asList(adapter.getFileExtensions()));
+            });
+        }
     }
 
     @Override
@@ -52,8 +56,7 @@ public class AutoEngineAdapter implements TemplatingEngineAdapter {
             }
         }
 
-        log.warn("No template engine for extension {} - File: {}", extension, templateFile);
-
+        log.warn("No template engine found for file extension {} - File: {}", extension, templateFile);
         return null;
     }
 }
