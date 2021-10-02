@@ -62,3 +62,6 @@ tmp/*
 usage-example/.openapi-generator*
 usage-example/src/main/java/*
 usage-example/src/test/java/*
+
+# Example Template Data
+**/example-data/*.json
