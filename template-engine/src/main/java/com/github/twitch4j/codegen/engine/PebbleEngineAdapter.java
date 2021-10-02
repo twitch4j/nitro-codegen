@@ -47,11 +47,11 @@ public class PebbleEngineAdapter implements TemplatingEngineAdapter {
     public String compileTemplate(TemplatingExecutor executor, Map<String, Object> bundle, String templateFile) throws IOException {
         loader.setTemplatingExecutor(executor);
 
-        log.warn("Processing Pebble Template: {}", templateFile);
+        log.debug("Processing Pebble Template: {}", templateFile);
         if (log.isTraceEnabled()) {
             ObjectMapper mapper = new ObjectMapper();
             mapper.disable(SerializationFeature.FAIL_ON_EMPTY_BEANS);
-            log.warn("Bundle Data: {}", mapper.writerWithDefaultPrettyPrinter().writeValueAsString(bundle));
+            log.debug("Bundle Data: {}", mapper.writerWithDefaultPrettyPrinter().writeValueAsString(bundle));
         }
 
         // render

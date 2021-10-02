@@ -15,25 +15,25 @@
 })
 @JsonTypeName("{{ model.name }}")
 {# Deprecated #}
-{% if model.isDeprecated %}@Deprecated{{ newline() }}{% endif %}
+    {% if model.isDeprecated %}@Deprecated{{ newline() }}{% endif %}
 @Data
 public class {{ model.classname }}{% if model.parent is not empty %} extends {{ model.parent }}{% endif %} {
 {% if serializableModel %}
     private static final long serialVersionUID = 1L;
 {% endif %}
 
-{% for var in model.vars %}
-{% if var.description is not empty %}
-    // {{ var.description }}{{ newline() }}
-{% endif %}
+    {% for var in model.vars %}
     @JsonProperty("{{ var.baseName }}")
-    private {{ var.datatypeWithEnum }} {{ var.name }}{% if var.defaultValue is not empty %} = {{ var.defaultValue }}{% endif %};
+    private {{ var.datatypeWithEnum }} {{var.name}}{% if var.defaultValue is not empty %} = {{ var.defaultValue }}{% endif %};
 
 {% endfor %}
 
-{% for var in model.vars %}
-{% if var.isEnum %}
-{% include "./model_inner_enum.peb" %}{{ newline }}
-{% endif %}
-{% endfor %}
+    public {{ dataType }} getValue() {
+        return value;
+    }
+
+    @Override
+    public String toString() {
+        return String.valueOf(value);
+    }
 }

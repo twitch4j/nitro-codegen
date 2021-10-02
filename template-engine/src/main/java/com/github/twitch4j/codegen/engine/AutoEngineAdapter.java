@@ -51,12 +51,12 @@ public class AutoEngineAdapter implements TemplatingEngineAdapter {
         // select the correct engine adapter for this file extension
         for (TemplatingEngineAdapter engineAdapter : engineAdapters) {
             if (Arrays.stream(engineAdapter.getFileExtensions()).anyMatch(extension::equalsIgnoreCase)) {
-                log.warn("Template {} will use engine {}", templateFile, engineAdapter.getIdentifier());
+                log.debug("Template {} will use engine {}", templateFile, engineAdapter.getIdentifier());
                 return engineAdapter.compileTemplate(executor, bundle, templateFile);
             }
         }
 
-        log.warn("No template engine found for file extension {} - File: {}", extension, templateFile);
+        log.debug("No template engine found for file extension {} - File: {}", extension, templateFile);
         return null;
     }
 }

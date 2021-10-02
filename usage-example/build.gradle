@@ -5,7 +5,6 @@ buildscript {
     }
     dependencies {
         classpath group: 'org.openapitools', name: 'openapi-generator-gradle-plugin', version: '5.3.0-SNAPSHOT'
-        // classpath group: 'org.openapitools', name: 'openapi-generator-gradle-plugin', version: '5.2.1'
 
         classpath project(':' + rootProject.name + '-template-engine')
         classpath project(':' + rootProject.name + '-java-feign')
@@ -26,6 +25,9 @@ dependencies {
 
     // Metrics
     implementation group: 'io.micrometer', name: 'micrometer-core', version: '1.7.3'
+
+    // Log
+    testImplementation group: 'org.slf4j', name: 'slf4j-simple', version: '1.7.32'
 
     // Feign
     implementation group: 'io.github.openfeign', name: 'feign-core', version: '11.6'

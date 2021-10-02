@@ -14,10 +14,9 @@ import io.swagger.v3.oas.annotations.media.Schema;
 
 import lombok.Data;
 
-{% for data in models %}
-{% if data.model.isEnum %}
-{% include "./modelEnum.peb" with {"model":data.model} %}
+{% for modelData in models %}
+{% if modelData.model.isEnum %}
 {% else %}
-{% include "./modelPojo.peb" with {"model":data.model} %}
+{% include "./modelPojo.peb" with {"model":modelData.model} %}
 {% endif %}
 {% endfor %}

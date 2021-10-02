@@ -1,10 +1,8 @@
 package com.github.twitch4j.codegen.java.feign;
 
-import io.swagger.v3.oas.models.OpenAPI;
-import io.swagger.v3.oas.models.Operation;
-import io.swagger.v3.oas.models.PathItem;
+import com.github.twitch4j.codegen.core.api.NitroCodegenConfig;
+import com.github.twitch4j.codegen.java.feign.utils.JavaCodegenUtils;
 import io.swagger.v3.oas.models.media.Schema;
-import io.swagger.v3.oas.models.tags.Tag;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.openapitools.codegen.CliOption;
@@ -98,9 +96,9 @@ public class JavaFeignGenerator extends AbstractJavaCodegen implements CodegenCo
         additionalProperties.put("mainClassName", camelize(openAPI.getInfo().getTitle(), false).replace(" ", ""));
 
         // directories
-        final String invokerFolder = (sourceFolder + "/" + invokerPackage).replace(".", "/");
-        final String apiFolder = (sourceFolder + "/" + apiPackage).replace(".", "/");
-        final String modelFolder = (sourceFolder + "/" + modelPackage).replace(".", "/");
+        final String invokerFolder = JavaCodegenUtils.packageToPath(sourceFolder, invokerPackage);
+        final String apiFolder = JavaCodegenUtils.packageToPath(sourceFolder, apiPackage);
+        final String modelFolder = JavaCodegenUtils.packageToPath(sourceFolder, modelPackage);
         final String specFolder = (invokerFolder + "/spec");
 
         // common files
@@ -121,57 +119,6 @@ public class JavaFeignGenerator extends AbstractJavaCodegen implements CodegenCo
         if ((boolean) additionalProperties.get(REQUEST_OVERLOAD_SPEC) == true) {
             apiTemplateFiles.put("api_spec.peb", "Spec.java");
         }
-    }
-
-    /**
-     * inspect and modify openapi spec
-     */
-    @Override
-    public void preprocessOpenAPI(OpenAPI openAPI) {
-        super.preprocessOpenAPI(openAPI);
-
-        if (openAPI == null) {
-            return;
-        }
-
-        String mainName = camelize(openAPI.getInfo().getTitle(), false);
-
-        // tags
-        openAPI.getTags().clear();
-        openAPI.setTags(List.of(new Tag().name(mainName)));
-
-        if (openAPI.getPaths() != null) {
-            for (String pathname : openAPI.getPaths().keySet()) {
-                PathItem path = openAPI.getPaths().get(pathname);
-                if (path.readOperations() != null) {
-                    for (Operation operation : path.readOperations()) {
-                        log.info("Processing operation {}", operation.getOperationId());
-                        processVendorExtensions(operation.getExtensions());
-
-                        // change tags
-                        /*
-                        operation.getTags().clear();
-                        operation.setTags(List.of(mainName));
-                        */
-                    }
-                }
-            }
-        }
-        if (openAPI.getComponents() != null && openAPI.getComponents().getSchemas() != null) {
-            openAPI.getComponents().getSchemas().entrySet().forEach(schema -> {
-                log.info("Processing schema {}", schema.getKey());
-                processVendorExtensions(schema.getValue().getExtensions());
-            });
-        }
-    }
-
-    /**
-     * some template engines have trouble with vendorExtensions, if the keys contain a minus, therefore we duplicate the values and replace the minus with a underscore for compatibility
-     *
-     * @param vendorExtensions vendorExtensions
-     */
-    private void processVendorExtensions(Map<String, Object> vendorExtensions) {
-        // todo: modify vendor extensions
     }
 
     @Override
@@ -224,4 +171,5 @@ public class JavaFeignGenerator extends AbstractJavaCodegen implements CodegenCo
         System.out.println("# This generator's contributed by github.com/twitch4j                          #");
         System.out.println("################################################################################");
     }
+
 }
