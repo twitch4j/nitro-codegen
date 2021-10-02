@@ -1,8 +1,9 @@
-{# API CLIENT #}
+{# @pebvariable name="t" type="com.github.twitch4j.codegen.core.domain.template.NitroGeneratorData" #}
+{# @pebvariable name="cfg" type="com.github.twitch4j.codegen.java.feign.config.JavaFeignGeneratorConfig" #}
 {% include "./licenseInfo.peb" %}
-package {{ invokerPackage }};
+package {{ t.apiPackage }};
 
-{% include "./import.peb" %}
+{% include "./import.peb" with {"t": t, "imports": t.api.imports} %}
 import feign.*;
 import feign.http2client.Http2Client;
 import feign.jackson.JacksonDecoder;
@@ -10,10 +11,10 @@ import feign.jackson.JacksonEncoder;
 import feign.slf4j.Slf4jLogger;
 import io.github.resilience4j.feign.FeignDecorators;
 import io.github.resilience4j.feign.Resilience4jFeign;
-import {{ apiPackage }}.{{ mainClassName }};
+import {{ t.apiPackage }}.{{ t.mainClassName }};
 
 {# Information #}
-@Generated(value = "{{ generatorClass }}"{% if not hideGenerationTimestamp %}, date = "{{ generatedDate }}"{% endif %})
+@Generated(value = "{{ t.generatorClass }}"{% if not cfg.hideGenerationTimestamp %}, date = "{{ t.generatorDate }}"{% endif %})
 public class {{ mainClassName }}Client {
 
     public static {{ mainClassName }} create(Consumer<{{ mainClassName }}ClientSpec> consumerSpec) {

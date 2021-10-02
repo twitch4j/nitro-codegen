@@ -4,10 +4,15 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        classpath group: 'org.openapitools', name: 'openapi-generator-gradle-plugin', version: '5.3.0-SNAPSHOT'
+        classpath group: 'org.openapitools', name: 'openapi-generator-gradle-plugin', version: "${property('openapitools.plugin.version')}"
 
         classpath project(':' + rootProject.name + '-template-engine')
         classpath project(':' + rootProject.name + '-java-feign')
+    }
+    configurations.classpath {
+        resolutionStrategy {
+            force "org.openapitools:openapi-generator:${property('openapitools.version')}"
+        }
     }
 }
 
@@ -46,7 +51,7 @@ dependencies {
 
 openApiGenerate {
     verbose = false
-    generatorName.set("custom-java-feign")
+    generatorName = "custom-java-feign"
     inputSpec = "$rootDir/usage-example/src/main/resources/openapi.yaml".toString()
     outputDir = "$rootDir/usage-example".toString()
     apiPackage = "com.github.twitch4j.helix.api"

@@ -1,5 +1,7 @@
+{# @pebvariable name="t" type="com.github.twitch4j.codegen.core.domain.template.NitroGeneratorData" #}
+{# @pebvariable name="cfg" type="com.github.twitch4j.codegen.java.feign.config.JavaFeignGeneratorConfig" #}
 {% include "./licenseInfo.peb" %}
-package {{ package }};
+package {{ t.apiPackage }};
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -9,35 +11,35 @@ import java.util.Map;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.BeforeEach;
 
-{% for import in imports %}import {{ import.import }};{{ newline() }}{% endfor %}
+{% include "./import.peb" with {"t": t, "imports": t.api.imports} %}
 
 import javax.annotation.processing.Generated;
 
 /**
- * API tests for {{ classname }}{{ newline() }}
+ * API tests for {{ t.api.classname }}{{ newline() }}
  */
-@Generated(value = "{{ generatorClass }}"{% if not hideGenerationTimestamp %}, date = "{{ generatedDate }}"{% endif %})
-class {{ classname }}Test {
+@Generated(value = "{{ generatorClass }}"{% if not cfg.hideGenerationTimestamp %}, date = "{{ generatedDate }}"{% endif %})
+class {{ t.api.classname }}Test {
 
-    private {{ classname }} api;
+    private {{ t.api.classname }} api;
 
     @BeforeEach
     public void setup() {
         // todo: setup ...
     }
 
-{% for operation in operations.operation %}
+{% for operation in t.operations %}
     /**
-     * {{ operation.summary }}{{ newline() }}
+     * {{ operation.codegenOperation.summary }}{{ newline() }}
      *
-     * {{ operation.notes }}{{ newline() }}
+     * {{ operation.codegenOperation.notes }}{{ newline() }}
      */
     @Test
-    void {{ operation.operationId }}Test() {
-{% for param in operation.allParams %}
+    void {{ operation.codegenOperation.operationId }}Test() {
+{% for param in operation.codegenOperation.allParams %}
         {{param.dataType}} {{param.paramName}} = null;
 {% endfor %}
-        // {% if operation.returnType is not empty %}{{ operation.returnType }} response = {% endif %}api.{{ operation.operationId }}({% for param in operation.allParams %}{{ param.example }}{% if not loop.last %},{% endif %}{% endfor %})
+        // {% if operation.codegenOperation.returnType is not empty %}{{ operation.codegenOperation.returnType }} response = {% endif %}api.{{ operation.codegenOperation.operationId }}({% for param in operation.codegenOperation.allParams %}{{ param.example }}{% if not loop.last %},{% endif %}{% endfor %})
         // TODO: test validations
     }
 {% endfor %}

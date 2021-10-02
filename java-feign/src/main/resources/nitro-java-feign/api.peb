@@ -1,15 +1,24 @@
+{# @pebvariable name="t" type="com.github.twitch4j.codegen.core.domain.template.NitroGeneratorData" #}
+{# @pebvariable name="cfg" type="com.github.twitch4j.codegen.java.feign.config.JavaFeignGeneratorConfig" #}
 {% include "./licenseInfo.peb" %}
-package {{ package }};
+package {{ t.apiPackage }};
 
-{% include "./import.peb" %}
+{% include "./import.peb" with {"t": t, "imports": t.api.imports} %}
 import feign.*;
+
+{{ operation.summary }}
+{% for operation in t.api.operations %}
+{% if cfg.requestOverloadSpec and operation.hasParams %}
+import {{ t.modelPackage }}.{{ operation.nickname | capitalize }}Spec;
+{% endif %}
+{% endfor %}
 
 {# Information #}
 {% if description is not empty %}@Schema(description = "{{ description }}"){{ newline() }}{% endif %}
-@Generated(value = "{{ generatorClass }}"{% if not hideGenerationTimestamp %}, date = "{{ generatedDate }}"{% endif %})
-public interface {{ classname }} {
+@Generated(value = "{{ t.generatorClass }}"{% if not cfg.hideGenerationTimestamp %}, date = "{{ t.generatorDate }}"{% endif %})
+public interface {{ t.api.classname }} {
 
-{% for operation in operations.operation %}
+{% for operation in t.api.operations %}
 {# DEFAULT METHOD #}
 {% include "./javadoc_method.peb" %}{{ newline() }}
 {# Deprecated #}
@@ -25,7 +34,7 @@ public interface {{ classname }} {
     {% if operation.returnType is not empty %}{{ operation.returnType }}{% else %}void{% endif %} {{ operation.nickname }}({% for param in operation.allParams %}{% if param.isHeaderParam or param.isQueryParam %}@Param("{{ param.paramName }}"){% endif %} {% include "./param_annotation.peb" %}{{ param.dataType }} {{ param.paramName }}{% if not loop.last %}, {% endif %}{% endfor %});
 
 {# OVERLOAD - MAP #}
-{% if requestOverloadMap and operation.hasParams %}
+{% if cfg.requestOverloadMap and operation.hasParams %}
     /**
      * {{ operation.summary }}{{ newline() }}
      *
@@ -64,7 +73,7 @@ public interface {{ classname }} {
 {% endif %}
 
 {# OVERLOAD - SPEC #}
-{% if requestOverloadSpec and operation.hasParams %}
+{% if cfg.requestOverloadSpec and operation.hasParams %}
     /**
      * {{ operation.summary }}{{ newline() }}
      *
@@ -90,8 +99,8 @@ public interface {{ classname }} {
      * @deprecated{% if operation.vendorExtensions.x_deprecated is not empty %} {{ operation.vendorExtensions.x_deprecated }}{% endif %}{{ newline() }}
 {% endif %}
      */
-    default {% if operation.returnType is not empty %}{{ operation.returnType }}{% else %}void{% endif %} {{ operation.nickname }}(Consumer<{{ classname }}Spec.{{ operation.nickname | capitalize }}Spec> spec) {
-        {{ classname }}Spec.{{ operation.nickname | capitalize }}Spec finalSpec = {{ classname }}Spec.{{ operation.nickname | capitalize }}Spec.process(spec);
+    default {% if operation.returnType is not empty %}{{ operation.returnType }}{% else %}void{% endif %} {{ operation.nickname }}(Consumer<{{ operation.nickname | capitalize }}Spec> spec) {
+        {{ operation.nickname | capitalize }}Spec finalSpec = {{ operation.nickname | capitalize }}Spec.process(spec);
         {% if operation.returnType is not empty %}return {% endif %}{{ operation.nickname }}({% for param in operation.allParams %}finalSpec.{{ param.paramName }}(){% if not loop.last %}, {% endif %}{% endfor %});
     }
 

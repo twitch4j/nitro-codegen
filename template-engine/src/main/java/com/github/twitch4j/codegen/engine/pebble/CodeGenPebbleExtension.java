@@ -1,5 +1,6 @@
 package com.github.twitch4j.codegen.engine.pebble;
 
+import com.github.twitch4j.codegen.engine.pebble.filter.LinePrefixFilter;
 import com.github.twitch4j.codegen.engine.pebble.filter.PadRightFilter;
 import com.github.twitch4j.codegen.engine.pebble.filter.WrapInFilter;
 import com.github.twitch4j.codegen.engine.pebble.function.GetOrDefaultFunction;
@@ -25,7 +26,8 @@ public class CodeGenPebbleExtension implements Extension {
     public Map<String, Filter> getFilters() {
         return Map.of(
                 "padright", new PadRightFilter(),
-                "wrapin", new WrapInFilter()
+                "wrapin", new WrapInFilter(),
+                "lineprefix", new LinePrefixFilter()
         );
     }
 

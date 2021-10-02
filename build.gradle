@@ -30,7 +30,7 @@ allprojects {
         // Constraints
         constraints {
             // OpenAPI Generator
-            api 'org.openapitools:openapi-generator:5.2.1'
+            api group: 'org.openapitools', name: 'openapi-generator', version: "${property('openapitools.version')}"
         }
 
         // JUnit5

@@ -1,19 +1,23 @@
 package com.github.twitch4j.codegen.java.feign;
 
-import com.github.twitch4j.codegen.core.api.NitroCodegenConfig;
+import com.github.twitch4j.codegen.core.api.INitroCodegen;
+import com.github.twitch4j.codegen.core.domain.config.NitroCodegenFile;
+import com.github.twitch4j.codegen.core.domain.config.NitroIterator;
+import com.github.twitch4j.codegen.core.domain.config.NitroScope;
+import com.github.twitch4j.codegen.java.feign.config.JavaFeignGeneratorConfig;
 import com.github.twitch4j.codegen.java.feign.utils.JavaCodegenUtils;
 import io.swagger.v3.oas.models.media.Schema;
-import lombok.Setter;
+import lombok.Getter;
+import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
-import org.openapitools.codegen.CliOption;
 import org.openapitools.codegen.CodegenConfig;
 import org.openapitools.codegen.CodegenModel;
 import org.openapitools.codegen.CodegenOperation;
 import org.openapitools.codegen.CodegenProperty;
 import org.openapitools.codegen.CodegenType;
-import org.openapitools.codegen.SupportingFile;
 import org.openapitools.codegen.languages.AbstractJavaCodegen;
 
+import java.io.File;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -23,7 +27,7 @@ import java.util.Set;
 import static org.openapitools.codegen.utils.StringUtils.camelize;
 
 @Slf4j
-public class JavaFeignGenerator extends AbstractJavaCodegen implements CodegenConfig {
+public class JavaFeignGenerator extends AbstractJavaCodegen implements CodegenConfig, INitroCodegen {
 
     protected static String CODEGEN_NAME = "nitro-java-feign";
     protected static String CODEGEN_HELP = "Generates a " + CODEGEN_NAME + " client library.";
@@ -40,18 +44,16 @@ public class JavaFeignGenerator extends AbstractJavaCodegen implements CodegenCo
         return CODEGEN_HELP;
     }
 
-    public static final String JETBRAINS_ANNOTATION_NULLABLE = "jetbrainsAnnotationsNullable";
-    public static final String REQUEST_OVERLOAD_MAP = "requestOverloadMap";
-    public static final String REQUEST_OVERLOAD_SPEC = "requestOverloadSpec";
-
-    @Setter
-    private Boolean jetbrainsAnnotationsNullable = true;
+    @Accessors(fluent = true)
+    @Getter
+    private JavaFeignGeneratorConfig cfg;
 
     public JavaFeignGenerator() {
         super();
 
         // setup
         templateDir = CODEGEN_NAME;
+        this.cfg = JavaFeignGeneratorConfig.of(null);
 
         // reset / reconfigure base generator
         modelTemplateFiles.clear();
@@ -62,13 +64,6 @@ public class JavaFeignGenerator extends AbstractJavaCodegen implements CodegenCo
         importMapping.remove("ApiModelProperty", "io.swagger.annotations.ApiModelProperty");
         importMapping.remove("ApiModel", "io.swagger.annotations.ApiModel");
         setDateLibrary("java8");
-
-        // features
-        cliOptions.add(CliOption.newBoolean(JETBRAINS_ANNOTATION_NULLABLE, "Enable JetBrains Annotations Nullable", this.jetbrainsAnnotationsNullable));
-
-        // configuration
-        setSerializableModel(true);
-        setJetbrainsAnnotationsNullable(true);
     }
 
     @Override
@@ -82,16 +77,6 @@ public class JavaFeignGenerator extends AbstractJavaCodegen implements CodegenCo
             importMapping.put("Instant", "java.time.Instant");
         }
 
-        // nullable
-        // - intellij annotation
-        if (additionalProperties.containsKey(JETBRAINS_ANNOTATION_NULLABLE)) {
-            this.setJetbrainsAnnotationsNullable(Boolean.parseBoolean(additionalProperties.get(JETBRAINS_ANNOTATION_NULLABLE).toString()));
-        }
-        additionalProperties.put(JETBRAINS_ANNOTATION_NULLABLE, jetbrainsAnnotationsNullable);
-        // - query by map
-        additionalProperties.put(REQUEST_OVERLOAD_MAP, false);
-        additionalProperties.put(REQUEST_OVERLOAD_SPEC, true); // TODO: enable
-
         // feign main class
         additionalProperties.put("mainClassName", camelize(openAPI.getInfo().getTitle(), false).replace(" ", ""));
 
@@ -101,23 +86,18 @@ public class JavaFeignGenerator extends AbstractJavaCodegen implements CodegenCo
         final String modelFolder = JavaCodegenUtils.packageToPath(sourceFolder, modelPackage);
         final String specFolder = (invokerFolder + "/spec");
 
-        // common files
-        modelTemplateFiles.put("model.peb", ".java");
-        apiTemplateFiles.put("api.peb", ".java");
-        apiTestTemplateFiles.put("api_test.peb", ".java");
+        // nitro files
+        cfg.addNitroFile(NitroCodegenFile.builder().sourceTemplate("api.peb").targetDirectory(apiFileFolder()).targetFileName("{name}.java").scope(NitroScope.API).iterator(NitroIterator.EACH_API).build());
+        cfg.addNitroFile(NitroCodegenFile.builder().sourceTemplate("api_test.peb").targetDirectory(apiTestFileFolder()).targetFileName("{name}.java").scope(NitroScope.API_TEST).iterator(NitroIterator.EACH_API).overwrite(false).build());
+        cfg.addNitroFile(NitroCodegenFile.builder().sourceTemplate("model.peb").targetDirectory(modelFileFolder()).targetFileName("{name}.java").scope(NitroScope.MODEL).iterator(NitroIterator.EACH_MODEL).build());
 
-        // feign main interface
-        supportingFiles.clear();
-        // - final interface (extending api_collect interface, workaround because feign can't handle multiple extends in the root interface)
-        supportingFiles.add(new SupportingFile("api_main.peb", apiFolder, additionalProperties.get("mainClassName")+".java"));
-        // - collect all interfaces into a single one
-        supportingFiles.add(new SupportingFile("api_collect.peb", apiFolder, additionalProperties.get("mainClassName")+"ApiCollection.java"));
-        // - api client
-        supportingFiles.add(new SupportingFile("api_client.peb", invokerFolder, additionalProperties.get("mainClassName")+"Client.java").doNotOverwrite());
+        cfg.addNitroFile(NitroCodegenFile.builder().sourceTemplate("api_main.peb").targetDirectory(apiFileFolder()).targetFileName(additionalProperties.get("mainClassName")+".java").scope(NitroScope.API).iterator(NitroIterator.ONCE_API).build());
+        cfg.addNitroFile(NitroCodegenFile.builder().sourceTemplate("api_collect.peb").targetDirectory(apiFileFolder()).targetFileName(additionalProperties.get("mainClassName")+"ApiCollection.java").scope(NitroScope.API).iterator(NitroIterator.ONCE_API).build());
+        cfg.addNitroFile(NitroCodegenFile.builder().sourceTemplate("api_client.peb").targetDirectory(sourceFolder + File.separator + invokerFolder).targetFileName(additionalProperties.get("mainClassName")+"Client.java").scope(NitroScope.API).iterator(NitroIterator.ONCE_API).build());
 
-        // spec files
-        if ((boolean) additionalProperties.get(REQUEST_OVERLOAD_SPEC) == true) {
-            apiTemplateFiles.put("api_spec.peb", "Spec.java");
+        // - spec files
+        if (cfg.getRequestOverloadSpec()) {
+            cfg.addNitroFile(NitroCodegenFile.builder().sourceTemplate("api_spec.peb").targetDirectory(modelFileFolder()).targetFileName("{name}Spec.java").scope(NitroScope.MODEL).iterator(NitroIterator.EACH_API_OPERATION).build());
         }
     }
 

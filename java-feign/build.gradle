@@ -3,6 +3,9 @@ dependencies {
     // OpenAPI Generator
     api group: 'org.openapitools', name: 'openapi-generator'
 
+    // Nitro CodeGen
+    api project(':' + rootProject.name + '-core')
+
     // OpenAPI Generator - Template Engine
     testImplementation project(':' + rootProject.name + '-template-engine')
 }

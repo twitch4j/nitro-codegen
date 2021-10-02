@@ -1,9 +1,9 @@
+{# @pebvariable name="t" type="com.github.twitch4j.codegen.core.domain.template.NitroGeneratorData" #}
 {% include "./licenseInfo.peb" %}
-package {{ package }};
+package {{ t.model.packageName }};
 
-{% include "./import.peb" %}
+{% include "./import.peb" with {"t": t, "imports": t.model.imports} %}
 
-{% for import in imports %}import {{ import.import }};{{ newline() }}{% endfor %}
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -14,9 +14,8 @@ import io.swagger.v3.oas.annotations.media.Schema;
 
 import lombok.Data;
 
-{% for modelData in models %}
-{% if modelData.model.isEnum %}
+{% if t.model.isEnum %}
+{# ENUM's are not supported yet #}
 {% else %}
-{% include "./modelPojo.peb" with {"model":modelData.model} %}
+{% include "./modelPojo.peb" with {"model": t.model} %}
 {% endif %}
-{% endfor %}
