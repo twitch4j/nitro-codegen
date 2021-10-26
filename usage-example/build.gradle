@@ -58,12 +58,12 @@ openApiGenerate {
     invokerPackage = "com.github.twitch4j.helix"
     modelPackage = "com.github.twitch4j.helix.domain"
     configOptions = [
-        clientClassName: "TwitchHelix",
-        hideGenerationTimestamp: "false",
-        useJackson: "true",
+            clientClassName        : "TwitchHelix",
+            hideGenerationTimestamp: "false",
+            useJackson             : "true",
     ]
     globalProperties = [
-        modelDocs: "false"
+            modelDocs: "false"
     ]
     enablePostProcessFile = false
     engine = "auto" // auto select engine based on template file extension
